@@ -77,6 +77,7 @@ function init() {
   initFileDrop();
   initStraightKey();
   initShareableURL();
+  initTheme();
   initServiceWorker();
 
   // Initialize visualizer
@@ -541,7 +542,7 @@ function initCharMap() {
 // ============================
 function initKeyboardShortcuts() {
   document.addEventListener('keydown', (e) => {
-    // Don't capture when typing in inputs (except Space for play)
+    // Don't capture when typing in inputs
     const target = e.target as HTMLElement;
     const isInput = target.tagName === 'TEXTAREA' || target.tagName === 'INPUT';
 
@@ -557,7 +558,8 @@ function initKeyboardShortcuts() {
       $('#morse-output').textContent = '';
     }
 
-    if (e.key === ' ' && !isInput) {
+    // Enter → Play/Stop (when not in textarea)
+    if (e.key === 'Enter' && !isInput) {
       e.preventDefault();
       if (state.isPlaying) {
         stop();
@@ -705,10 +707,20 @@ function initStraightKey() {
   document.addEventListener('keydown', (e) => {
     const target = e.target as HTMLElement;
     const isInput = target.tagName === 'TEXTAREA' || target.tagName === 'INPUT';
-    if (e.code === 'Space' && !isInput && !e.repeat && !state.isPlaying) {
-      // Already handled in keyboard shortcuts for play/stop
-      // If you want space for straight key, uncomment:
-      // state.morseKey!.keyDown();
+    if (e.code === 'Space' && !isInput && !e.repeat) {
+      e.preventDefault();
+      keyBtn.classList.add('pressed');
+      state.morseKey!.keyDown();
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    const target = e.target as HTMLElement;
+    const isInput = target.tagName === 'TEXTAREA' || target.tagName === 'INPUT';
+    if (e.code === 'Space' && !isInput) {
+      e.preventDefault();
+      keyBtn.classList.remove('pressed');
+      state.morseKey!.keyUp();
     }
   });
 }
@@ -743,6 +755,34 @@ function showToast(message: string) {
   toast.textContent = message;
   toast.classList.add('show');
   setTimeout(() => toast.classList.remove('show'), 2500);
+}
+
+// ============================
+// Theme Toggle (Dark / Light)
+// ============================
+function initTheme() {
+  const saved = localStorage.getItem('morspresso-theme');
+  if (saved === 'light') {
+    document.documentElement.setAttribute('data-theme', 'light');
+    const icon = document.getElementById('theme-icon');
+    if (icon) icon.textContent = '☀️';
+  }
+
+  const btn = $('#btn-theme');
+  btn.addEventListener('click', () => {
+    const isLight = document.documentElement.getAttribute('data-theme') === 'light';
+    if (isLight) {
+      document.documentElement.removeAttribute('data-theme');
+      localStorage.setItem('morspresso-theme', 'dark');
+      const icon = document.getElementById('theme-icon');
+      if (icon) icon.textContent = '🌙';
+    } else {
+      document.documentElement.setAttribute('data-theme', 'light');
+      localStorage.setItem('morspresso-theme', 'light');
+      const icon = document.getElementById('theme-icon');
+      if (icon) icon.textContent = '☀️';
+    }
+  });
 }
 
 // ============================

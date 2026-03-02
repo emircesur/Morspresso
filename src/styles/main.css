@@ -961,3 +961,98 @@ input[type="range"]::-moz-range-thumb {
 .playing .play-icon {
   animation: pulse 1s infinite;
 }
+
+/* === Bright (Light) Theme === */
+[data-theme="light"] {
+  --bg-primary: #f5f5f7;
+  --bg-secondary: #ffffff;
+  --bg-tertiary: #e8e8ec;
+  --bg-panel: #ffffff;
+  --bg-input: #f0f0f4;
+
+  --text-primary: #1a1a2e;
+  --text-secondary: #555570;
+  --text-muted: #8888a0;
+
+  --accent: #d4940a;
+  --accent-dim: #a87508;
+  --accent-glow: rgba(212, 148, 10, 0.25);
+
+  --green: #16a34a;
+  --green-dim: #15803d;
+  --red: #dc2626;
+  --blue: #2563eb;
+  --cyan: #0891b2;
+
+  --border: #d0d0da;
+  --border-focus: #d4940a;
+
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  --shadow-glow: 0 0 20px var(--accent-glow);
+}
+
+[data-theme="light"] body {
+  -webkit-font-smoothing: auto;
+}
+
+[data-theme="light"] .header {
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+}
+
+[data-theme="light"] .header-brand h1 {
+  background: linear-gradient(135deg, var(--accent), #333);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+[data-theme="light"] .console-output {
+  background: #1e1e2e;
+  color: #ccc;
+}
+
+[data-theme="light"] .viz-container {
+  background: #111;
+}
+
+[data-theme="light"] .lamp {
+  background: #e0e0e0;
+  border-color: #bbb;
+}
+
+[data-theme="light"] .lamp.on {
+  background: #f0b429;
+  border-color: #ffd666;
+}
+
+[data-theme="light"] .key-paddle {
+  background: linear-gradient(180deg, #999, #777);
+  border-color: #888;
+}
+
+[data-theme="light"] .straight-key:active .key-paddle,
+[data-theme="light"] .straight-key.pressed .key-paddle {
+  background: linear-gradient(180deg, #bbb, #999);
+}
+
+[data-theme="light"] .key-base {
+  background: linear-gradient(180deg, #555, #444);
+  border-color: #666;
+}
+
+[data-theme="light"] input[type="range"] {
+  background: #d0d0da;
+}
+
+[data-theme="light"] ::-webkit-scrollbar-track {
+  background: var(--bg-primary);
+}
+
+[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #c0c0cc;
+}
+
+[data-theme="light"] .alphabet-select option {
+  background: #fff;
+  color: #1a1a2e;
+}
