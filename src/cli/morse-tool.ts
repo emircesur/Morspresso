@@ -15,6 +15,7 @@ import { decodeMorse, decodeSamples } from '../engine/decoder';
 import { generateMorseBuffer, audioBufferToWav, getTimingInfo } from '../engine/audio-engine';
 import { addWhiteNoise } from '../engine/dsp';
 import { calculateTiming } from '../engine/timing';
+import type { AlphabetId } from '../engine/morse-map';
 import * as fs from 'fs';
 import * as path from 'path';
 
@@ -46,6 +47,8 @@ Options:
   --wpm <number>         Words per minute (default: 20)
   --farnsworth <number>  Farnsworth overall speed (default: same as --wpm)
   --freq <number>        Tone frequency in Hz (default: 700)
+  --alphabet <id>        Alphabet: latin, turkish, greek, cyrillic, hebrew,
+                         arabic, persian, korean, japanese (default: latin)
   --noise <number>       Add white noise (0-1, default: 0)
   --output <path>        Output file path
   --verbose              Show detailed timing info
@@ -53,6 +56,7 @@ Options:
 
 Examples:
   morse-tool encode "SOS"
+  morse-tool encode "MERHABA" --alphabet turkish
   morse-tool decode "... --- ..."
   morse-tool synth "HELLO WORLD" --wpm 20 --output hello.wav
   morse-tool synth "SOS" --wpm 20 --noise 0.2
@@ -66,11 +70,13 @@ function cmdEncode() {
     console.error('Error: No text provided. Usage: morse-tool encode "YOUR TEXT"');
     process.exit(1);
   }
-  const morse = encodeText(text);
+  const alphabet = (getFlag('alphabet', 'latin') || 'latin') as AlphabetId;
+  const morse = encodeText(text, { alphabet });
   console.log(morse);
 
   if (hasFlag('verbose')) {
     console.log(`\nOriginal: ${text}`);
+    console.log(`Alphabet: ${alphabet}`);
     console.log(`Encoded:  ${morse}`);
     console.log(`Characters: ${text.length}`);
     console.log(`Morse symbols: ${morse.replace(/\s/g, '').length}`);
@@ -120,7 +126,9 @@ function cmdDecode() {
     console.log(text);
 
     if (hasFlag('verbose')) {
-      console.log(`\nMorse:   ${morse}`);
+      const alphabet = (getFlag('alphabet', 'latin') || 'latin') as AlphabetId;
+      console.log(`\nAlphabet: ${alphabet}`);
+      console.log(`Morse:   ${morse}`);
       console.log(`Decoded: ${text}`);
     }
   }
@@ -138,14 +146,16 @@ function cmdSynth() {
   const freq = parseInt(getFlag('freq', '700'), 10);
   const noiseLevel = parseFloat(getFlag('noise', '0'));
   const outputPath = getFlag('output', `morspresso-${text.slice(0, 20).replace(/[^a-zA-Z0-9]/g, '_')}.wav`);
+  const alphabet = (getFlag('alphabet', 'latin') || 'latin') as AlphabetId;
 
   console.log(`Synthesizing: "${text}"`);
-  console.log(`Settings: ${wpm} WPM, Farnsworth: ${farnsworth} WPM, Freq: ${freq} Hz`);
+  console.log(`Settings: ${wpm} WPM, Farnsworth: ${farnsworth} WPM, Freq: ${freq} Hz, Alphabet: ${alphabet}`);
 
   const buffer = generateMorseBuffer(text, {
     charSpeed: wpm,
     overallSpeed: farnsworth,
     frequency: freq,
+    alphabet,
   });
 
   let samples = buffer.getChannelData(0);
@@ -164,6 +174,7 @@ function cmdInfo() {
   const text = args[1] || 'PARIS';
   const wpm = parseInt(getFlag('wpm', '20'), 10);
   const farnsworth = parseInt(getFlag('farnsworth', String(wpm)), 10);
+  const alphabet = (getFlag('alphabet', 'latin') || 'latin') as AlphabetId;
 
   const timing = calculateTiming({
     charSpeed: wpm,
@@ -171,7 +182,7 @@ function cmdInfo() {
     frequency: 700,
   });
 
-  const morse = encodeText(text);
+  const morse = encodeText(text, { alphabet });
 
   console.log(`Text:    "${text}"`);
   console.log(`Morse:   ${morse}`);
@@ -192,6 +203,7 @@ function cmdInfo() {
       volume: 0.7,
       attackMs: 5,
       releaseMs: 5,
+      alphabet,
     });
 
     console.log(`\nDetailed Timing Map:`);

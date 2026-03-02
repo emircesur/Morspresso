@@ -52,6 +52,7 @@ const state: AppState = {
     volume: 0.7,
     attackMs: 5,
     releaseMs: 5,
+    alphabet: 'latin',
   },
   activeTab: 'text',
   activeViz: 'waterfall',
@@ -444,6 +445,7 @@ function initAlphabetSelector() {
   const select = $<HTMLSelectElement>('#alphabet-select');
   select.addEventListener('change', () => {
     state.alphabet = select.value as AlphabetId;
+    state.options.alphabet = state.alphabet;
     logConsole('info', `» Alphabet changed to: ${ALPHABETS.find(a => a.id === state.alphabet)?.name ?? state.alphabet}`);
 
     // Re-trigger live encode/decode

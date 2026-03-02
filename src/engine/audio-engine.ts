@@ -6,6 +6,7 @@
 
 import { encodeText, parseMorseToElements, type MorseElement } from './encoder';
 import { calculateTiming, type TimingConfig, type TimingValues } from './timing';
+import type { AlphabetId } from './morse-map';
 
 export type WaveformType = 'sine' | 'square' | 'triangle' | 'sawtooth';
 
@@ -18,6 +19,7 @@ export interface AudioEngineOptions {
   volume: number;          // 0 to 1
   attackMs: number;        // ADSR attack in ms
   releaseMs: number;       // ADSR release in ms
+  alphabet: AlphabetId;    // Which alphabet to encode with
 }
 
 export const DEFAULT_OPTIONS: AudioEngineOptions = {
@@ -29,6 +31,7 @@ export const DEFAULT_OPTIONS: AudioEngineOptions = {
   volume: 0.7,
   attackMs: 5,
   releaseMs: 5,
+  alphabet: 'latin',
 };
 
 export type PlaybackCallback = (event: PlaybackEvent) => void;
@@ -55,7 +58,7 @@ export function scheduleMorsePlayback(
     overallSpeed: opts.overallSpeed,
     frequency: opts.frequency,
   });
-  const morseStr = encodeText(text);
+  const morseStr = encodeText(text, { alphabet: opts.alphabet });
   const elements = parseMorseToElements(morseStr);
 
   // Audio graph: Oscillator -> Gain (envelope) -> Panner -> Analyser -> Destination
@@ -197,7 +200,7 @@ export function generateMorseBuffer(
     overallSpeed: opts.overallSpeed,
     frequency: opts.frequency,
   });
-  const morseStr = encodeText(text);
+  const morseStr = encodeText(text, { alphabet: opts.alphabet });
   const elements = parseMorseToElements(morseStr);
 
   // Calculate total duration
@@ -360,7 +363,7 @@ export function getTimingInfo(
     overallSpeed: opts.overallSpeed,
     frequency: opts.frequency,
   });
-  const morseStr = encodeText(text);
+  const morseStr = encodeText(text, { alphabet: opts.alphabet });
   const elements = parseMorseToElements(morseStr);
   const info: Array<{ element: string; durationMs: number; startMs: number }> = [];
   let currentMs = 0;
