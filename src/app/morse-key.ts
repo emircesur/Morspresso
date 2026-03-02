@@ -1,7 +1,7 @@
 /**
  * Morspresso — Interactive Morse Key Decoder
  * Decodes user taps on the straight key into text.
- * Uses timing analysis with jitter tolerance.
+ * Uses timing analysis with jitter tolerance. https://github.com/emircesur
  */
 
 import { MORSE_TO_CHAR, MORSE_TO_PROSIGN } from '../engine/morse-map';
