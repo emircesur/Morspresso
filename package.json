@@ -1,0 +1,29 @@
+{
+  "name": "morspresso",
+  "version": "1.0.0",
+  "description": "Advanced Morse Code Translator with Audio Playback, DSP & Signal Processing",
+  "main": "dist/engine/index.js",
+  "types": "dist/engine/index.d.ts",
+  "bin": {
+    "morse-tool": "dist/cli/morse-tool.js"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "tsc --noEmit",
+    "cli": "npx tsx src/cli/morse-tool.ts"
+  },
+  "keywords": ["morse", "morse-code", "audio", "web-audio-api", "dsp", "translator", "pwa"],
+  "author": "",
+  "license": "MIT",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^25.3.3",
+    "typescript": "^5.9.3",
+    "vite": "^7.3.1",
+    "vitest": "^4.0.18"
+  }
+}

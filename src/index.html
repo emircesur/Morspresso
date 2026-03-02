@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Morspresso - Advanced Morse Code Translator with Audio Playback, DSP, and Signal Processing">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>Morspresso — Morse Code Translator</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📡</text></svg>">
+  <link rel="stylesheet" href="styles/main.css">
+</head>
+<body>
+  <div id="app">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-brand">
+        <span class="header-icon">📡</span>
+        <h1>Morspresso</h1>
+        <span class="header-badge">PRO</span>
+      </div>
+      <div class="header-actions">
+        <button id="btn-charmap" class="btn btn-ghost" title="Character Map (Ctrl+M)">
+          <span class="icon">📖</span>
+        </button>
+        <button id="btn-theme" class="btn btn-ghost" title="Toggle Theme">
+          <span class="icon">🌙</span>
+        </button>
+        <span class="kbd-hint">Space: Play · Esc: Clear</span>
+      </div>
+    </header>
+
+    <!-- Main Content Grid -->
+    <main class="main-grid">
+      <!-- Left Column: Input & Controls -->
+      <section class="panel panel-input">
+        <div class="panel-header">
+          <h2>Input</h2>
+          <div class="input-tabs">
+            <button class="tab active" data-tab="text">Text → Morse</button>
+            <button class="tab" data-tab="morse">Morse → Text</button>
+            <button class="tab" data-tab="file">Decode File</button>
+          </div>
+        </div>
+
+        <div class="tab-content active" data-tab-content="text">
+          <textarea id="input-text" class="input-area" placeholder="Type your message here... (e.g. SOS or HELLO WORLD)&#10;&#10;Supports prosigns: <SK> <AR> <SOS>" rows="4"></textarea>
+          <div class="morse-output" id="morse-output"></div>
+        </div>
+
+        <div class="tab-content" data-tab-content="morse">
+          <textarea id="input-morse" class="input-area" placeholder="Type Morse code here...&#10;Use . for dot, - for dash&#10;Space between characters, / between words&#10;&#10;Example: ... --- ... / .... . .-.. .--." rows="4"></textarea>
+          <div class="text-output" id="text-output"></div>
+        </div>
+
+        <div class="tab-content" data-tab-content="file">
+          <div class="file-drop" id="file-drop">
+            <div class="file-drop-content">
+              <span class="file-icon">📁</span>
+              <p>Drop a WAV/MP3 file here or click to browse</p>
+              <input type="file" id="file-input" accept="audio/*" hidden>
+            </div>
+          </div>
+          <div class="decode-result" id="decode-result"></div>
+        </div>
+
+        <!-- Playback Controls -->
+        <div class="controls-bar">
+          <button id="btn-play" class="btn btn-primary btn-lg" title="Play (Space)">
+            <span class="play-icon">▶</span> Play
+          </button>
+          <button id="btn-stop" class="btn btn-danger" title="Stop" disabled>
+            <span>⏹</span> Stop
+          </button>
+          <button id="btn-export" class="btn btn-secondary" title="Export WAV">
+            <span>💾</span> Export WAV
+          </button>
+          <button id="btn-share" class="btn btn-secondary" title="Share URL">
+            <span>🔗</span> Share
+          </button>
+          <button id="btn-clear" class="btn btn-ghost" title="Clear (Esc)">
+            Clear
+          </button>
+        </div>
+      </section>
+
+      <!-- Right Column: Audio Settings -->
+      <section class="panel panel-settings">
+        <div class="panel-header">
+          <h2>Audio Engine</h2>
+        </div>
+
+        <div class="settings-grid">
+          <div class="setting-group">
+            <label>Character Speed</label>
+            <div class="range-row">
+              <input type="range" id="char-speed" min="5" max="50" value="20" step="1">
+              <span class="range-value" id="char-speed-val">20 WPM</span>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label>Overall Speed (Farnsworth)</label>
+            <div class="range-row">
+              <input type="range" id="overall-speed" min="3" max="50" value="15" step="1">
+              <span class="range-value" id="overall-speed-val">15 WPM</span>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label>Frequency</label>
+            <div class="range-row">
+              <input type="range" id="frequency" min="300" max="1200" value="700" step="10">
+              <span class="range-value" id="frequency-val">700 Hz</span>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label>Volume</label>
+            <div class="range-row">
+              <input type="range" id="volume" min="0" max="100" value="70" step="1">
+              <span class="range-value" id="volume-val">70%</span>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label>Waveform</label>
+            <div class="waveform-selector">
+              <button class="wave-btn active" data-wave="sine" title="Sine - Classic smooth tone">
+                <svg viewBox="0 0 40 20"><path d="M0,10 Q10,0 20,10 Q30,20 40,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>Sine</span>
+              </button>
+              <button class="wave-btn" data-wave="square" title="Square - Harsh military style">
+                <svg viewBox="0 0 40 20"><path d="M0,15 L0,5 L10,5 L10,15 L20,15 L20,5 L30,5 L30,15 L40,15" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>Square</span>
+              </button>
+              <button class="wave-btn" data-wave="triangle" title="Triangle - Mellow tone">
+                <svg viewBox="0 0 40 20"><path d="M0,10 L10,2 L20,18 L30,2 L40,10" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>Triangle</span>
+              </button>
+              <button class="wave-btn" data-wave="sawtooth" title="Sawtooth - Buzzy tone">
+                <svg viewBox="0 0 40 20"><path d="M0,15 L10,3 L10,15 L20,3 L20,15 L30,3 L30,15 L40,3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+                <span>Sawtooth</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label>Stereo Pan</label>
+            <div class="range-row">
+              <span class="pan-label">L</span>
+              <input type="range" id="pan" min="-100" max="100" value="0" step="1">
+              <span class="pan-label">R</span>
+              <span class="range-value" id="pan-val">Center</span>
+            </div>
+          </div>
+
+          <div class="setting-group">
+            <label>Envelope (ADSR)</label>
+            <div class="adsr-row">
+              <div>
+                <small>Attack</small>
+                <input type="range" id="attack" min="1" max="50" value="5" step="1">
+                <span class="range-value-sm" id="attack-val">5ms</span>
+              </div>
+              <div>
+                <small>Release</small>
+                <input type="range" id="release" min="1" max="50" value="5" step="1">
+                <span class="range-value-sm" id="release-val">5ms</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Visualizer Row -->
+      <section class="panel panel-viz full-width">
+        <div class="panel-header">
+          <h2>Signal Monitor</h2>
+          <div class="viz-tabs">
+            <button class="viz-tab active" data-viz="waterfall">Waterfall</button>
+            <button class="viz-tab" data-viz="oscilloscope">Oscilloscope</button>
+            <button class="viz-tab" data-viz="spectrum">Spectrum</button>
+          </div>
+        </div>
+        <div class="viz-container">
+          <canvas id="viz-canvas" width="800" height="200"></canvas>
+        </div>
+      </section>
+
+      <!-- Signal Lamp + Morse Key Row -->
+      <section class="panel panel-interactive full-width">
+        <div class="interactive-grid">
+          <!-- Signal Lamp -->
+          <div class="lamp-section">
+            <h3>Signal Lamp</h3>
+            <div class="lamp-container">
+              <div class="lamp" id="signal-lamp">
+                <div class="lamp-glow"></div>
+              </div>
+            </div>
+            <div class="lamp-text" id="lamp-text"></div>
+          </div>
+
+          <!-- Straight Key -->
+          <div class="key-section">
+            <h3>Straight Key <small>(Hold Space or Click)</small></h3>
+            <div class="key-container">
+              <button id="straight-key" class="straight-key">
+                <div class="key-paddle"></div>
+                <div class="key-base"></div>
+              </button>
+            </div>
+            <div class="key-output">
+              <div class="key-morse" id="key-morse"></div>
+              <div class="key-decoded" id="key-decoded"></div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Pro Console -->
+      <section class="panel panel-console full-width">
+        <div class="panel-header">
+          <h2>Pro Console</h2>
+          <button id="btn-clear-console" class="btn btn-ghost btn-sm">Clear</button>
+        </div>
+        <div class="console-output" id="console-output">
+          <div class="console-line console-info">» Morspresso v1.0 — Advanced Morse Code Translator</div>
+          <div class="console-line console-info">» Press Space to play, Esc to clear. Ctrl+M for character map.</div>
+        </div>
+      </section>
+    </main>
+
+    <!-- Character Map Slide-out -->
+    <div class="charmap-overlay" id="charmap-overlay">
+      <div class="charmap-panel">
+        <div class="charmap-header">
+          <h2>📖 Morse Code Reference</h2>
+          <input type="text" id="charmap-search" class="charmap-search" placeholder="Search characters...">
+          <button id="charmap-close" class="btn btn-ghost">✕</button>
+        </div>
+        <div class="charmap-content" id="charmap-content"></div>
+      </div>
+    </div>
+
+    <!-- Share Toast -->
+    <div class="toast" id="toast"></div>
+  </div>
+
+  <script type="module" src="app/main.ts"></script>
+</body>
+</html>
