@@ -14,6 +14,7 @@ import {
   getAllMappings,
   ALPHABETS,
   MORSE_TO_CHAR,
+  getReverseMorseMap,
   type AlphabetId,
   type AudioEngineOptions,
   type WaveformType,
@@ -211,12 +212,14 @@ function play() {
 
   // Log timing info
   const timingInfo = getTimingInfo(text, state.options);
-  logConsole('info', `» Playing: "${text}"`);
+  logConsole('info', `» Playing: "${text}" [alphabet: ${state.options.alphabet}]`);
   logConsole('timing', `» Timing: char=${state.options.charSpeed}WPM, overall=${state.options.overallSpeed}WPM, freq=${state.options.frequency}Hz`);
 
   const lamp = $('#signal-lamp');
   const lampText = $('#lamp-text');
+  lampText.textContent = ''; // Clear lamp text on new playback
   let currentChar = '';
+  const reverseMap = getReverseMorseMap(state.alphabet);
 
   const { duration, cancel, analyser } = scheduleMorsePlayback(ctx, text, state.options, (event: PlaybackEvent) => {
     switch (event.type) {
@@ -235,8 +238,8 @@ function play() {
 
       case 'char':
         currentChar = event.char;
-        // Lookup display character  
-        const displayChar = MORSE_TO_CHAR[event.char] || event.char;
+        // Lookup display character using current alphabet's reverse map
+        const displayChar = reverseMap[event.char] || MORSE_TO_CHAR[event.char] || event.char;
         lampText.textContent = (lampText.textContent || '') + displayChar;
         logConsole('char', `  [${displayChar}] = ${event.char}`);
         break;
@@ -448,6 +451,11 @@ function initAlphabetSelector() {
     state.options.alphabet = state.alphabet;
     logConsole('info', `» Alphabet changed to: ${ALPHABETS.find(a => a.id === state.alphabet)?.name ?? state.alphabet}`);
 
+    // Sync straight key decoder alphabet
+    if (state.morseKey) {
+      state.morseKey.setAlphabet(state.alphabet);
+    }
+
     // Re-trigger live encode/decode
     const inputText = $<HTMLTextAreaElement>('#input-text');
     const inputMorse = $<HTMLTextAreaElement>('#input-morse');
@@ -619,7 +627,7 @@ function initFileDrop() {
       const ctx = ensureAudioContext();
       const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
       const samples = audioBuffer.getChannelData(0);
-      const result = decodeSamples(samples, audioBuffer.sampleRate);
+      const result = decodeSamples(samples, audioBuffer.sampleRate, { alphabet: state.alphabet });
 
       resultDiv.innerHTML = `
         <div style="color:var(--green);font-size:1.1rem;margin-bottom:8px">${result.text || '(no text detected)'}</div>

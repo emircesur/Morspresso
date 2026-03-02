@@ -78,9 +78,10 @@ export function decodeSamples(
   options: {
     frequency?: number;
     adaptiveThreshold?: boolean;
+    alphabet?: AlphabetId;
   } = {}
 ): DecodeResult {
-  const { adaptiveThreshold = true } = options;
+  const { adaptiveThreshold = true, alphabet = 'latin' } = options;
 
   // Step 1: Compute envelope (RMS in windows)
   const windowSize = Math.floor(sampleRate * 0.005); // 5ms windows
@@ -204,7 +205,7 @@ export function decodeSamples(
   }
 
   // Step 6: Decode Morse string to text
-  const text = decodeMorse(morseStr.trim());
+  const text = decodeMorse(morseStr.trim(), alphabet);
   const wpm = estimateWPM(estimatedDot);
 
   return {

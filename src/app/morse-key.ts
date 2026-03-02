@@ -4,7 +4,7 @@
  * Uses timing analysis with jitter tolerance. https://github.com/emircesur
  */
 
-import { MORSE_TO_CHAR, MORSE_TO_PROSIGN } from '../engine/morse-map';
+import { MORSE_TO_CHAR, MORSE_TO_PROSIGN, getReverseMorseMap, type AlphabetId } from '../engine/morse-map';
 
 type ToneHandle = { osc: OscillatorNode; gain: GainNode };
 
@@ -20,6 +20,7 @@ export class MorseKeyDecoder {
   private isDown: boolean = false;
   private pressCount: number = 0;
   private toneHandle: ToneHandle | null = null;
+  private alphabet: AlphabetId = 'latin';
 
   private onMorseUpdate: (morse: string) => void;
   private onTextUpdate: (text: string) => void;
@@ -100,7 +101,8 @@ export class MorseKeyDecoder {
 
   private finalizeChar() {
     if (!this.currentChar) return;
-    const decoded = MORSE_TO_CHAR[this.currentChar] || MORSE_TO_PROSIGN[this.currentChar] || '?';
+    const reverseMap = getReverseMorseMap(this.alphabet);
+    const decoded = reverseMap[this.currentChar] || MORSE_TO_CHAR[this.currentChar] || MORSE_TO_PROSIGN[this.currentChar] || '?';
     this.currentText += decoded;
     this.fullMorse += ' ';
     this.onTextUpdate(this.currentText);
@@ -116,6 +118,10 @@ export class MorseKeyDecoder {
     this.fullMorse += '/ ';
     this.onTextUpdate(this.currentText);
     this.onMorseUpdate(this.fullMorse);
+  }
+
+  setAlphabet(alphabet: AlphabetId) {
+    this.alphabet = alphabet;
   }
 
   reset() {
