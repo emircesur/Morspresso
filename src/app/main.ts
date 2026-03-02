@@ -12,7 +12,9 @@ import {
   audioBufferToWav,
   getTimingInfo,
   getAllMappings,
+  ALPHABETS,
   MORSE_TO_CHAR,
+  type AlphabetId,
   type AudioEngineOptions,
   type WaveformType,
   type PlaybackEvent,
@@ -32,6 +34,7 @@ interface AppState {
   options: AudioEngineOptions;
   activeTab: string;
   activeViz: string;
+  alphabet: AlphabetId;
 }
 
 const state: AppState = {
@@ -52,6 +55,7 @@ const state: AppState = {
   },
   activeTab: 'text',
   activeViz: 'waterfall',
+  alphabet: 'latin' as AlphabetId,
 };
 
 // ============================
@@ -67,6 +71,7 @@ function init() {
   initTabs();
   initControls();
   initSettings();
+  initAlphabetSelector();
   initCharMap();
   initKeyboardShortcuts();
   initFileDrop();
@@ -126,7 +131,7 @@ function initControls() {
   inputText.addEventListener('input', () => {
     const text = inputText.value;
     if (text.trim()) {
-      const morse = encodeText(text);
+      const morse = encodeText(text, { alphabet: state.alphabet });
       morseOutput.textContent = morse;
     } else {
       morseOutput.textContent = '';
@@ -138,7 +143,7 @@ function initControls() {
   inputMorse.addEventListener('input', () => {
     const morse = inputMorse.value.trim();
     if (morse) {
-      const text = decodeMorse(morse);
+      const text = decodeMorse(morse, state.alphabet);
       textOutput.textContent = text;
     } else {
       textOutput.textContent = '';
@@ -283,7 +288,7 @@ function getCurrentText(): string {
     return $<HTMLTextAreaElement>('#input-text').value;
   }
   if (state.activeTab === 'morse') {
-    return decodeMorse($<HTMLTextAreaElement>('#input-morse').value);
+    return decodeMorse($<HTMLTextAreaElement>('#input-morse').value, state.alphabet);
   }
   return '';
 }
@@ -352,7 +357,7 @@ function initShareableURL() {
   if (hash) {
     const text = decodeURIComponent(hash);
     $<HTMLTextAreaElement>('#input-text').value = text;
-    const morse = encodeText(text);
+    const morse = encodeText(text, { alphabet: state.alphabet });
     $('#morse-output').textContent = morse;
     logConsole('info', `» Loaded from URL: "${text}"`);
   }
@@ -432,25 +437,57 @@ function bindRange(inputId: string, valueId: string, handler: (val: number) => s
 }
 
 // ============================
+// Alphabet Selector
+// ============================
+function initAlphabetSelector() {
+  const select = $<HTMLSelectElement>('#alphabet-select');
+  select.addEventListener('change', () => {
+    state.alphabet = select.value as AlphabetId;
+    logConsole('info', `» Alphabet changed to: ${ALPHABETS.find(a => a.id === state.alphabet)?.name ?? state.alphabet}`);
+
+    // Re-trigger live encode/decode
+    const inputText = $<HTMLTextAreaElement>('#input-text');
+    const inputMorse = $<HTMLTextAreaElement>('#input-morse');
+
+    if (state.activeTab === 'text' && inputText.value.trim()) {
+      const morse = encodeText(inputText.value, { alphabet: state.alphabet });
+      $('#morse-output').textContent = morse;
+    } else if (state.activeTab === 'morse' && inputMorse.value.trim()) {
+      const text = decodeMorse(inputMorse.value, state.alphabet);
+      $('#text-output').textContent = text;
+    }
+
+    // Set text direction based on alphabet
+    const info = ALPHABETS.find(a => a.id === state.alphabet);
+    if (info) {
+      inputText.dir = info.direction;
+      inputMorse.dir = 'ltr'; // Morse is always LTR
+    }
+  });
+}
+
+// ============================
 // Character Map
 // ============================
 function initCharMap() {
   const overlay = $('#charmap-overlay');
   const content = $('#charmap-content');
   const search = $<HTMLInputElement>('#charmap-search');
+  const alphabetFilter = $<HTMLSelectElement>('#charmap-alphabet');
 
-  // Build character map
-  const mappings = getAllMappings();
-  const groups: Record<string, typeof mappings> = {
-    'Letters': mappings.filter(m => /^[A-Z]$/.test(m.char)),
-    'Numbers': mappings.filter(m => /^[0-9]$/.test(m.char)),
-    'Punctuation': mappings.filter(m => /^[^A-Z0-9<]$/.test(m.char)),
-    'Prosigns': mappings.filter(m => m.char.startsWith('<')),
-  };
-
-  function render(filter: string = '') {
+  function render(filter: string = '', alphabetId?: string) {
     content.innerHTML = '';
     const f = filter.toLowerCase();
+
+    // Get mappings for the selected alphabet(s)
+    const mappings = getAllMappings(alphabetId as AlphabetId || undefined);
+
+    // Group by the group field
+    const groups: Record<string, typeof mappings> = {};
+    for (const m of mappings) {
+      if (!groups[m.group]) groups[m.group] = [];
+      groups[m.group].push(m);
+    }
 
     for (const [groupName, entries] of Object.entries(groups)) {
       const filtered = entries.filter(e =>
@@ -477,9 +514,10 @@ function initCharMap() {
     }
   }
 
-  render();
+  render('', 'latin');
 
-  search.addEventListener('input', () => render(search.value));
+  search.addEventListener('input', () => render(search.value, alphabetFilter.value));
+  alphabetFilter.addEventListener('change', () => render(search.value, alphabetFilter.value));
 
   // Open/Close
   $('#btn-charmap').addEventListener('click', () => {

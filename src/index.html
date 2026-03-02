@@ -43,6 +43,22 @@
           </div>
         </div>
 
+        <!-- Alphabet Selector -->
+        <div class="alphabet-bar">
+          <label for="alphabet-select" class="alphabet-label">🌐 Alphabet:</label>
+          <select id="alphabet-select" class="alphabet-select">
+            <option value="latin" selected>Latin (International)</option>
+            <option value="turkish">Turkish (Türkçe)</option>
+            <option value="greek">Greek (Ελληνικά)</option>
+            <option value="cyrillic">Cyrillic (Кириллица)</option>
+            <option value="hebrew">Hebrew (עברית)</option>
+            <option value="arabic">Arabic (العربية)</option>
+            <option value="persian">Persian (فارسی)</option>
+            <option value="korean">Korean (한국어)</option>
+            <option value="japanese">Japanese Wabun (和文)</option>
+          </select>
+        </div>
+
         <div class="tab-content active" data-tab-content="text">
           <textarea id="input-text" class="input-area" placeholder="Type your message here... (e.g. SOS or HELLO WORLD)&#10;&#10;Supports prosigns: <SK> <AR> <SOS>" rows="4"></textarea>
           <div class="morse-output" id="morse-output"></div>
@@ -237,6 +253,18 @@
       <div class="charmap-panel">
         <div class="charmap-header">
           <h2>📖 Morse Code Reference</h2>
+          <select id="charmap-alphabet" class="alphabet-select">
+            <option value="">All Alphabets</option>
+            <option value="latin" selected>Latin (International)</option>
+            <option value="turkish">Turkish (Türkçe)</option>
+            <option value="greek">Greek (Ελληνικά)</option>
+            <option value="cyrillic">Cyrillic (Кириллица)</option>
+            <option value="hebrew">Hebrew (עברית)</option>
+            <option value="arabic">Arabic (العربية)</option>
+            <option value="persian">Persian (فارسی)</option>
+            <option value="korean">Korean (한국어)</option>
+            <option value="japanese">Japanese Wabun (和文)</option>
+          </select>
           <input type="text" id="charmap-search" class="charmap-search" placeholder="Search characters...">
           <button id="charmap-close" class="btn btn-ghost">✕</button>
         </div>

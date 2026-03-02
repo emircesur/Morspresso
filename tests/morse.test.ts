@@ -6,7 +6,13 @@
 import { describe, it, expect } from 'vitest';
 import { encodeText, parseMorseToElements } from '../src/engine/encoder';
 import { decodeMorse, decodeMorseTree, decodeSamples } from '../src/engine/decoder';
-import { CHAR_TO_MORSE, MORSE_TO_CHAR, PROSIGNS, getAllMappings, buildMorseTree } from '../src/engine/morse-map';
+import { CHAR_TO_MORSE, MORSE_TO_CHAR, PROSIGNS, getAllMappings, buildMorseTree,
+  TURKISH_TO_MORSE,
+  GREEK_TO_MORSE, CYRILLIC_TO_MORSE, HEBREW_TO_MORSE, ARABIC_TO_MORSE,
+  KOREAN_TO_MORSE, JAPANESE_TO_MORSE, PERSIAN_TO_MORSE,
+  Q_CODES, ABBREVIATIONS,
+  getAlphabetMap, getReverseMorseMap, ALPHABETS,
+} from '../src/engine/morse-map';
 import { calculateTiming, estimateWPM } from '../src/engine/timing';
 import { goertzel, detectPitch, adaptiveThreshold, addWhiteNoise } from '../src/engine/dsp';
 
@@ -367,5 +373,180 @@ describe('Edge Cases', () => {
         expect(decoded).toBe(char);
       }
     }
+  });
+});
+
+// ============================
+// Non-Latin Alphabet Tests
+// ============================
+describe('Non-Latin Alphabets', () => {
+  it('should have all 9 alphabets registered', () => {
+    expect(ALPHABETS.length).toBe(9);
+    const ids = ALPHABETS.map(a => a.id);
+    expect(ids).toContain('latin');
+    expect(ids).toContain('turkish');
+    expect(ids).toContain('greek');
+    expect(ids).toContain('cyrillic');
+    expect(ids).toContain('korean');
+    expect(ids).toContain('japanese');
+  });
+
+  it('should have Greek alphabet with 24 letters', () => {
+    expect(Object.keys(GREEK_TO_MORSE).length).toBe(24);
+    expect(GREEK_TO_MORSE['Α']).toBe('.-');
+    expect(GREEK_TO_MORSE['Ω']).toBe('.--');
+    expect(GREEK_TO_MORSE['Σ']).toBe('...');
+  });
+
+  it('should have Cyrillic alphabet with key letters', () => {
+    expect(CYRILLIC_TO_MORSE['А']).toBe('.-');
+    expect(CYRILLIC_TO_MORSE['Б']).toBe('-...');
+    expect(CYRILLIC_TO_MORSE['Ж']).toBe('...-');
+    expect(CYRILLIC_TO_MORSE['Я']).toBe('.-.-');
+    expect(Object.keys(CYRILLIC_TO_MORSE).length).toBeGreaterThanOrEqual(30);
+  });
+
+  it('should have Hebrew alphabet with 22 letters', () => {
+    expect(Object.keys(HEBREW_TO_MORSE).length).toBe(22);
+    expect(HEBREW_TO_MORSE['א']).toBe('.-');
+    expect(HEBREW_TO_MORSE['ת']).toBe('-');
+  });
+
+  it('should have Arabic alphabet with key letters', () => {
+    expect(ARABIC_TO_MORSE['ا']).toBe('.-');
+    expect(ARABIC_TO_MORSE['ب']).toBe('-...');
+    expect(Object.keys(ARABIC_TO_MORSE).length).toBeGreaterThanOrEqual(28);
+  });
+
+  it('should have Persian alphabet with extra letters', () => {
+    expect(PERSIAN_TO_MORSE['پ']).toBe('.--.');
+    expect(PERSIAN_TO_MORSE['چ']).toBe('---.');
+    expect(PERSIAN_TO_MORSE['گ']).toBe('--.-');
+  });
+
+  it('should have Korean Hangul consonants and vowels', () => {
+    expect(KOREAN_TO_MORSE['ㄱ']).toBe('.-..');
+    expect(KOREAN_TO_MORSE['ㅏ']).toBe('.');
+    expect(KOREAN_TO_MORSE['ㅎ']).toBe('.---');
+    expect(Object.keys(KOREAN_TO_MORSE).length).toBe(26);
+  });
+
+  it('should have Japanese Wabun code katakana', () => {
+    expect(JAPANESE_TO_MORSE['ア']).toBe('--.--');
+    expect(JAPANESE_TO_MORSE['イ']).toBe('.-');
+    expect(JAPANESE_TO_MORSE['ン']).toBe('.-.-.');
+    expect(Object.keys(JAPANESE_TO_MORSE).length).toBeGreaterThanOrEqual(45);
+  });
+
+  it('should encode Greek text to Morse', () => {
+    const result = encodeText('ΑΒΓ', { alphabet: 'greek' });
+    expect(result).toBe('.- -... --.');
+  });
+
+  it('should decode Morse to Cyrillic', () => {
+    const result = decodeMorse('.- -... .--', 'cyrillic');
+    expect(result).toBe('АБВ');
+  });
+
+  it('should encode Korean and decode back', () => {
+    const encoded = encodeText('ㅎㅏ', { alphabet: 'korean' });
+    expect(encoded).toBe('.--- .');
+    const decoded = decodeMorse(encoded, 'korean');
+    expect(decoded).toBe('ㅎㅏ');
+  });
+
+  it('should get alphabet map by ID', () => {
+    const greekMap = getAlphabetMap('greek');
+    expect(greekMap).toBe(GREEK_TO_MORSE);
+    const latinMap = getAlphabetMap('latin');
+    expect(latinMap).toBe(CHAR_TO_MORSE);
+  });
+
+  it('should build reverse Morse map for non-Latin', () => {
+    const reverseGreek = getReverseMorseMap('greek');
+    expect(reverseGreek['.-']).toBe('Α');
+    expect(reverseGreek['...']).toBe('Σ');
+  });
+
+  it('should build Morse tree for non-Latin alphabet', () => {
+    const tree = buildMorseTree('cyrillic');
+    expect(tree.dot?.char).toBe('Е');
+    expect(tree.dash?.char).toBe('Т');
+  });
+
+  it('should return grouped mappings for all alphabets', () => {
+    const all = getAllMappings();
+    expect(all.length).toBeGreaterThan(200);
+    const groups = new Set(all.map(m => m.group));
+    expect(groups.has('Letters')).toBe(true);
+    expect(groups.has('Greek (Ελληνικά)')).toBe(true);
+    expect(groups.has('Korean (한국어)')).toBe(true);
+  });
+
+  it('should return filtered mappings for specific alphabet', () => {
+    const greek = getAllMappings('greek');
+    expect(greek.every(m => m.group.includes('Greek'))).toBe(true);
+    expect(greek.length).toBe(24);
+  });
+
+  it('should fall back to Latin numbers when encoding non-Latin with digits', () => {
+    const result = encodeText('Α1', { alphabet: 'greek' });
+    expect(result).toBe('.- .----');
+  });
+
+  it('should have Turkish alphabet with 32 characters', () => {
+    expect(Object.keys(TURKISH_TO_MORSE).length).toBe(32);
+    // Standard Latin letters present
+    expect(TURKISH_TO_MORSE['A']).toBe('.-');
+    expect(TURKISH_TO_MORSE['Z']).toBe('--..');
+    // Turkish-specific letters
+    expect(TURKISH_TO_MORSE['Ç']).toBe('-.-..');
+    expect(TURKISH_TO_MORSE['Ğ']).toBe('--.-.');
+    expect(TURKISH_TO_MORSE['İ']).toBe('..');
+    expect(TURKISH_TO_MORSE['Ö']).toBe('---.');
+    expect(TURKISH_TO_MORSE['Ş']).toBe('.--..'); 
+    expect(TURKISH_TO_MORSE['Ü']).toBe('..--');
+  });
+
+  it('should encode Turkish text with special chars', () => {
+    const result = encodeText('ÇAĞ', { alphabet: 'turkish' });
+    expect(result).toBe('-.-.. .- --.-.');
+  });
+
+  it('should decode Morse to Turkish', () => {
+    const decoded = decodeMorse('-.-.. .- --.-.', 'turkish');
+    expect(decoded).toBe('ÇAĞ');
+  });
+
+  it('should roundtrip Turkish encode→decode', () => {
+    const text = 'ÖŞÜÇ';
+    const encoded = encodeText(text, { alphabet: 'turkish' });
+    const decoded = decodeMorse(encoded, 'turkish');
+    expect(decoded).toBe(text);
+  });
+
+  it('should have Q codes', () => {
+    expect(Object.keys(Q_CODES).length).toBeGreaterThanOrEqual(15);
+    expect(Q_CODES['QTH']).toBe('Location / position');
+    expect(Q_CODES['QSL']).toBe('Acknowledge receipt');
+  });
+
+  it('should have common abbreviations', () => {
+    expect(Object.keys(ABBREVIATIONS).length).toBeGreaterThanOrEqual(15);
+    expect(ABBREVIATIONS['73']).toBe('Best regards');
+    expect(ABBREVIATIONS['CQ']).toBe('Calling any station');
+  });
+
+  it('should include Q codes and abbreviations in Latin mappings', () => {
+    const all = getAllMappings('latin');
+    const groups = new Set(all.map(m => m.group));
+    expect(groups.has('Q Codes')).toBe(true);
+    expect(groups.has('Abbreviations')).toBe(true);
+  });
+
+  it('should have 9 alphabets registered', () => {
+    expect(ALPHABETS.length).toBe(9);
+    const ids = ALPHABETS.map(a => a.id);
+    expect(ids).toContain('turkish');
   });
 });

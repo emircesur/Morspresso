@@ -2,11 +2,13 @@
  * Morspresso - Text ↔ Morse Encoder
  */
 
-import { CHAR_TO_MORSE, PROSIGNS } from './morse-map';
+import { CHAR_TO_MORSE, PROSIGNS, getAlphabetMap, type AlphabetId } from './morse-map';
 
 export interface EncodeOptions {
   /** Include prosigns (e.g. <SK>, <AR>) */
   prosigns?: boolean;
+  /** Which alphabet to encode with (default: 'latin') */
+  alphabet?: AlphabetId;
 }
 
 /**
@@ -14,14 +16,18 @@ export interface EncodeOptions {
  * Returns dots (.), dashes (-), spaces for character gaps, and / for word gaps.
  */
 export function encodeText(text: string, options: EncodeOptions = {}): string {
-  const { prosigns = true } = options;
-  let input = text.toUpperCase();
+  const { prosigns = true, alphabet = 'latin' } = options;
+  const charMap = getAlphabetMap(alphabet);
+  // Only uppercase for Latin/Turkish/Greek/Cyrillic scripts
+  const input = alphabet === 'latin' || alphabet === 'turkish' || alphabet === 'greek' || alphabet === 'cyrillic'
+    ? text.toUpperCase()
+    : text;
   const result: string[] = [];
 
   let i = 0;
   while (i < input.length) {
-    // Check for prosigns first
-    if (prosigns && input[i] === '<') {
+    // Check for prosigns first (Latin mode only)
+    if (prosigns && alphabet === 'latin' && input[i] === '<') {
       const end = input.indexOf('>', i);
       if (end !== -1) {
         const tag = input.slice(i, end + 1);
@@ -36,8 +42,11 @@ export function encodeText(text: string, options: EncodeOptions = {}): string {
     const char = input[i];
     if (char === ' ') {
       result.push('/');
-    } else if (CHAR_TO_MORSE[char]) {
-      result.push(CHAR_TO_MORSE[char]);
+    } else if (charMap[char]) {
+      result.push(charMap[char]);
+    } else if (alphabet !== 'latin' && CHAR_TO_MORSE[char.toUpperCase()]) {
+      // Fallback to Latin for numbers/punctuation when using non-Latin alphabet
+      result.push(CHAR_TO_MORSE[char.toUpperCase()]);
     }
     // Skip unknown characters silently
     i++;

@@ -3,22 +3,26 @@
  * Decodes Morse strings and raw audio samples back to text.
  */
 
-import { MORSE_TO_CHAR, MORSE_TO_PROSIGN, buildMorseTree, type MorseTreeNode } from './morse-map';
+import { MORSE_TO_CHAR, MORSE_TO_PROSIGN, getReverseMorseMap, buildMorseTree, type MorseTreeNode, type AlphabetId } from './morse-map';
 import { estimateWPM } from './timing';
 
 /**
  * Decode a standard Morse code string to text.
  * Input format: dots/dashes separated by spaces, words by " / ".
  */
-export function decodeMorse(morse: string): string {
+export function decodeMorse(morse: string, alphabet: AlphabetId = 'latin'): string {
+  const reverseMap = getReverseMorseMap(alphabet);
   const words = morse.trim().split(/\s*\/\s*/);
   return words.map(word => {
     const chars = word.trim().split(/\s+/);
     return chars.map(code => {
       if (!code) return '';
-      // Prefer regular characters, fallback to prosigns
-      if (MORSE_TO_CHAR[code]) return MORSE_TO_CHAR[code];
-      if (MORSE_TO_PROSIGN[code]) return MORSE_TO_PROSIGN[code];
+      // Check alphabet-specific map first
+      if (reverseMap[code]) return reverseMap[code];
+      // Fallback: if non-Latin, also check Latin for numbers/punctuation
+      if (alphabet !== 'latin' && MORSE_TO_CHAR[code]) return MORSE_TO_CHAR[code];
+      // Check prosigns (Latin mode)
+      if (alphabet === 'latin' && MORSE_TO_PROSIGN[code]) return MORSE_TO_PROSIGN[code];
       return '?';
     }).join('');
   }).join(' ');
@@ -27,8 +31,8 @@ export function decodeMorse(morse: string): string {
 /**
  * Decode using Morse tree (more efficient for streaming).
  */
-export function decodeMorseTree(morse: string): string {
-  const tree = buildMorseTree();
+export function decodeMorseTree(morse: string, alphabet: AlphabetId = 'latin'): string {
+  const tree = buildMorseTree(alphabet);
   const words = morse.trim().split(/\s*\/\s*/);
   return words.map(word => {
     const chars = word.trim().split(/\s+/);
